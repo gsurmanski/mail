@@ -1,3 +1,12 @@
 textarea {
     min-height: 400px;
 }
+.entry {
+    border: 1px solid black;
+    padding: 10px;
+    min-height: 20px;
+}
+.message {
+    text-align:center;
+    background-color: white;
+}

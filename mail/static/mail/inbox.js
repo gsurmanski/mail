@@ -17,6 +17,7 @@ function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#read-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
   // Clear out composition fields
@@ -25,10 +26,12 @@ function compose_email() {
   document.querySelector('#compose-body').value = '';
 }
 
+
 function load_mailbox(mailbox) {
-  
+
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
+  document.querySelector('#read-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'none';
 
   // Show the mailbox name and capitalize by capitalizing first letter and adding rest of string
@@ -41,77 +44,55 @@ function load_mailbox(mailbox) {
   })
   .then(response => response.json())
   .then(emails => {
-    function load_mailbox(mailbox) {
-  
-      // Show the mailbox and hide other views
-      document.querySelector('#emails-view').style.display = 'block';
-      document.querySelector('#compose-view').style.display = 'none';
-
-      // Show the mailbox name and capitalize by capitalizing first letter and adding rest of string
-      document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>
-      <p><div id="emails"></div></p>`;
-
-      //get emails for mailbox selection
-      fetch('/emails/' + mailbox, {
-        method: "GET"
-      })
-      .then(response => response.json())
-      .then(emails => {
-        //display emails
-        emails.forEach(email => {
-          const element = document.createElement('div');
-          element.innerHTML = `From: ${email.sender} | Subject: ${email.subject} | Date: ${email.timestamp}`;
-          
-          //if email is marked as read in database, render as grey
-          if (email.archived === true) {
-            element.style.backgroundColor = "grey";
-          }
-
-          //create event listner for each email to do stuff when clicked
-          element.addEventListener('click', () => {
-            //if clicked, update database with PUT to set entry to gret
-            fetch('/emails', { 
-              method: "PUT", 
-              body: JSON.stringify({
-                read: true
-              })
-            });
-            
-          })
-          document.querySelector('#emails').append(element);
-
-          console.log(emails);
-        })
-      })
-
-    }
     //display emails
     emails.forEach(email => {
       const element = document.createElement('div');
+      //assign an element class
+      element.classList.add('entry');
+      //construct email
       element.innerHTML = `From: ${email.sender} | Subject: ${email.subject} | Date: ${email.timestamp}`;
       
       //if email is marked as read in database, render as grey
-      if (email.archived === true) {
+      if (email.read === true) {
         element.style.backgroundColor = "grey";
       }
 
-      //create event listner for each email to do stuff when clicked
+      // Create event listener for each email to do stuff when clicked
       element.addEventListener('click', () => {
-        //if clicked, update database with PUT to set entry to gret
-        fetch('/emails', { 
+        // If clicked, update database with PUT to set entry as read
+        fetch('/emails/' + email.id, { 
           method: "PUT", 
           body: JSON.stringify({
             read: true
           })
+        })
+        .then(result => {
+          console.log(result);
         });
-        
-      })
+        //if clicked, also load the email itself
+        fetch('/emails/' + email.id, {
+          method: "GET"
+        })
+        .then(response => response.json())
+        .then(email => {
+          // Show the mailbox and hide other views
+          document.querySelector('#emails-view').style.display = 'none';
+          document.querySelector('#compose-view').style.display = 'none';
+          document.querySelector('#read-view').style.display = 'block';
+
+          document.querySelector('#read-view').innerHTML = `
+          <h2>${email.subject}</h2>
+          <p>From: ${email.sender} - ${email.timestamp}</p>
+          <p>To: ${email.recipients}</p>
+          <p><div class="message">${email.body}</p></div>`;
+        });
+      });
+
       document.querySelector('#emails').append(element);
 
       console.log(emails);
-    })
-  })
-
+    });
+  });
 }
 
 //function for sending mail on submit
