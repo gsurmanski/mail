@@ -51,10 +51,12 @@ function load_mailbox(mailbox) {
       element.classList.add('entry');
       //construct email
       element.innerHTML = `From: ${email.sender} | Subject: ${email.subject} | Date: ${email.timestamp}`;
-      
+      //make pointer
+      element.style.cursor = "pointer";
+
       //if email is marked as read in database, render as grey
       if (email.read === true) {
-        element.style.backgroundColor = "grey";
+        element.style.backgroundColor = "#F3F3F3";
       }
 
       // Create event listener for each email to do stuff when clicked
@@ -69,12 +71,14 @@ function load_mailbox(mailbox) {
         .then(result => {
           console.log(result);
         });
+
         //if clicked, also load the email itself
         fetch('/emails/' + email.id, {
           method: "GET"
         })
         .then(response => response.json())
         .then(email => {
+
           // Show the mailbox and hide other views
           document.querySelector('#emails-view').style.display = 'none';
           document.querySelector('#compose-view').style.display = 'none';
@@ -85,12 +89,57 @@ function load_mailbox(mailbox) {
           <p>From: ${email.sender} - ${email.timestamp}</p>
           <p>To: ${email.recipients}</p>
           <p><div class="message">${email.body}</p></div>`;
+
+          //if email not archived
+          if (email.archived != true) {
+            //create archive button
+            const archiveButton = document.createElement('button');
+            archiveButton.id = 'archive';
+            archiveButton.textContent = 'Archive';
+            document.querySelector('#read-view').appendChild(archiveButton);
+            // Create event listener for archive button
+            document.querySelector('#archive').addEventListener('click', () => {
+              //do something
+              fetch('/emails/' + email.id, { 
+                method: "PUT", 
+                body: JSON.stringify({
+                  archived: true
+                })
+              })
+              .then(result => {
+                console.log(result);
+              });
+            });
+            ///////////////////
+          }
+          else {
+            //create unarchive button
+            const unarchiveButton = document.createElement('button');
+            unarchiveButton.id = 'unarchive';
+            unarchiveButton.textContent = 'UnArchive';
+            document.querySelector('#read-view').appendChild(unarchiveButton);
+            // Create event listener for archive button
+            document.querySelector('#unarchive').addEventListener('click', () => {
+              //do something
+              fetch('/emails/' + email.id, { 
+                method: "PUT", 
+                body: JSON.stringify({
+                  archived: false
+                })
+              })
+              .then(result => {
+                console.log(result);
+              });
+            });
+            ///////////////////
+          }
         });
       });
 
       document.querySelector('#emails').append(element);
 
       console.log(emails);
+      
     });
   });
 }
