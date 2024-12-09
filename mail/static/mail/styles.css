@@ -2,11 +2,25 @@ textarea {
     min-height: 400px;
 }
 .entry {
-    border: 1px solid black;
+    border: 1px solid rgb(177, 177, 177);
+    border-width: 0px 0px 1px 0px;
     padding: 10px;
     min-height: 20px;
 }
 .message {
-    text-align:center;
+    text-align:left;
     background-color: white;
+    margin-left: 25px;
+}
+
+#from {
+    font-weight:bold;
+}
+
+#to {
+    color:grey;
+}
+
+.btn.btn-secondary {
+    margin-left: 5px;
 }

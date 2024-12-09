@@ -32,10 +32,13 @@
             <textarea class="form-control" id="compose-body" placeholder="Body"></textarea>
             <input type="submit" class="btn btn-primary" value="Send"/>
         </form>
-        <button id ="test">test</button>
     </div>
 {% endblock %}
 
 {% block script %}
+    <script>
+    // Embed the user's email into a global JavaScript variable
+    var userEmail = "{{ request.user.email|escapejs }}";
+    </script>
     <script src="{% static 'mail/inbox.js' %}"></script>
 {% endblock %}

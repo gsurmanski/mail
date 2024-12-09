@@ -50,13 +50,23 @@ function load_mailbox(mailbox) {
       //assign an element class
       element.classList.add('entry');
       //construct email
-      element.innerHTML = `From: ${email.sender} | Subject: ${email.subject} | Date: ${email.timestamp}`;
+      element.innerHTML = `
+      <div class="row">
+      <div class="col-4">${email.sender}</div>
+      <div class="col-4">${email.subject}</div>
+      <div class="col-4">${email.timestamp}</div>
+      </div>
+      `;
       //make pointer
       element.style.cursor = "pointer";
 
       //if email is marked as read in database, render as grey
       if (email.read === true) {
-        element.style.backgroundColor = "#F3F3F3";
+        element.style.backgroundColor = "#eaf1fb";
+      }
+      else {
+        //unread emails are bold
+        element.style.fontWeight = "bold";
       }
 
       // Create event listener for each email to do stuff when clicked
@@ -79,23 +89,47 @@ function load_mailbox(mailbox) {
         .then(response => response.json())
         .then(email => {
 
-          // Show the mailbox and hide other views
+          // Show the email and hide other views
           document.querySelector('#emails-view').style.display = 'none';
           document.querySelector('#compose-view').style.display = 'none';
           document.querySelector('#read-view').style.display = 'block';
 
+          //format email and turn line breaks from database into html <br>
           document.querySelector('#read-view').innerHTML = `
           <h2>${email.subject}</h2>
-          <p>From: ${email.sender} - ${email.timestamp}</p>
-          <p>To: ${email.recipients}</p>
-          <p><div class="message">${email.body}</p></div>`;
+          <p id="to">To: ${email.recipients}</p>
+          <p id="from">From: ${email.sender} - ${email.timestamp}</p>
+          <p><div class="message">${email.body.replace(/\n/g, '<br>')}</p></div>`;
 
-          //if email not archived
-          if (email.archived != true) {
+          //create reply button and set event handler
+          const replyButton = document.createElement('button');
+          replyButton.textContent = "Reply";
+          document.querySelector('#read-view').appendChild(replyButton);
+          replyButton.id = "reply";
+          replyButton.className = "btn btn-primary";
+
+          replyButton.addEventListener('click', () => {
+            compose_email();
+            document.querySelector('#compose-recipients').value = email.sender;
+            //check if Re: already in subject, if not add it
+            if (email.subject.startsWith("Re:") === false) {
+              email.subject = "Re: " + email.subject;
+            }
+            document.querySelector('#compose-subject').value = email.subject;
+            //fill out email form and put past responses below with \n
+            document.querySelector('#compose-body').value = `
+            \n\n\n-- \nOn ${email.timestamp}, ${email.sender} wrote:
+            ${email.body}`;
+          });
+
+          //if email not archived.
+          //variable userEmail defined on inbox.html
+          if (email.archived != true && email.sender != userEmail) {
             //create archive button
             const archiveButton = document.createElement('button');
             archiveButton.id = 'archive';
             archiveButton.textContent = 'Archive';
+            archiveButton.className = "btn btn-secondary";
             document.querySelector('#read-view').appendChild(archiveButton);
             // Create event listener for archive button
             document.querySelector('#archive').addEventListener('click', () => {
@@ -108,15 +142,18 @@ function load_mailbox(mailbox) {
               })
               .then(result => {
                 console.log(result);
+                load_mailbox('inbox');
               });
             });
             ///////////////////
           }
-          else {
+          else if (email.sender != userEmail) {
             //create unarchive button
             const unarchiveButton = document.createElement('button');
             unarchiveButton.id = 'unarchive';
             unarchiveButton.textContent = 'UnArchive';
+            unarchiveButton.className = "btn btn-secondary";
+
             document.querySelector('#read-view').appendChild(unarchiveButton);
             // Create event listener for archive button
             document.querySelector('#unarchive').addEventListener('click', () => {
@@ -129,17 +166,18 @@ function load_mailbox(mailbox) {
               })
               .then(result => {
                 console.log(result);
+                load_mailbox('inbox');
               });
             });
-            ///////////////////
           }
+
         });
       });
 
       document.querySelector('#emails').append(element);
 
       console.log(emails);
-      
+
     });
   });
 }
@@ -163,6 +201,7 @@ function send_email(event) {
   .then(response => response.json())
   .then(result => {
     console.log(result);
+    load_mailbox('sent');
   })
   .catch(error => {
     console.error('Error:', error);
@@ -170,5 +209,4 @@ function send_email(event) {
 
   console.log("send_email called!");
 
-  load_mailbox('sent');
 }
